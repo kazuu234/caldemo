@@ -5,7 +5,7 @@
   command = "npm run build"
   
   # 公開ディレクトリ
-  publish = "build"
+  publish = "dist"
 
 # リダイレクト設定（SPAのため）
 [[redirects]]
