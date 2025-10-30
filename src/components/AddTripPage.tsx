@@ -369,12 +369,12 @@ export function AddTripPage({ onAdd, onCancel, authUser }: AddTripPageProps) {
                     <div className="space-y-1">
                       {countriesInRegion.map((countryOption) => (
                         <Button
-                          key={countryOption}
-                          variant={country === countryOption ? "default" : "ghost"}
+                          key={countryOption.name}
+                          variant={country === countryOption.name ? "default" : "ghost"}
                           className="w-full justify-start"
-                          onClick={() => handleCountrySelect(countryOption)}
+                          onClick={() => handleCountrySelect(countryOption.name)}
                         >
-                          {countryOption}
+                          {countryOption.emoji} {countryOption.name}
                         </Button>
                       ))}
                     </div>

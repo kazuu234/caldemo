@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
+import { Calendar as CalendarComponent } from './ui/calendar';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { MapPin, Calendar, Users, X, Check } from 'lucide-react';
@@ -38,9 +40,11 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
   const [selectedRegion, setSelectedRegion] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [recruitmentOnly, setRecruitmentOnly] = useState(false);
+  const [showStartCalendar, setShowStartCalendar] = useState(false);
+  const [showEndCalendar, setShowEndCalendar] = useState(false);
 
   // ユニークなユーザー名リストを取得
   const userNames = useMemo(() => {
@@ -69,7 +73,7 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
     if (!selectedRegion) {
       return Object.keys(COUNTRIES_CITIES).sort((a, b) => a.localeCompare(b, 'ja'));
     }
-    return COUNTRIES_BY_REGION[selectedRegion as Region] || [];
+    return COUNTRIES_BY_REGION[selectedRegion as Region]?.map(c => c.name) || [];
   }, [selectedRegion]);
 
   // 選択された国に基づいて都市をフィルタリング
@@ -106,7 +110,7 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
     // 地域フィルター
     if (selectedRegion) {
       const countriesInRegion = COUNTRIES_BY_REGION[selectedRegion as Region];
-      if (!countriesInRegion.includes(trip.country)) {
+      if (!countriesInRegion.some(c => c.name === trip.country)) {
         return false;
       }
     }
@@ -123,14 +127,12 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
 
     // 日付フィルター（開始日）
     if (startDate) {
-      const searchStart = new Date(startDate);
-      if (trip.endDate < searchStart) return false;
+      if (trip.endDate < startDate) return false;
     }
 
     // 日付フィルター（終了日）
     if (endDate) {
-      const searchEnd = new Date(endDate);
-      if (trip.startDate > searchEnd) return false;
+      if (trip.startDate > endDate) return false;
     }
 
     // 合流募集のみフィルター
@@ -145,9 +147,13 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
     setSelectedRegion('');
     setSelectedCountry('');
     setSelectedCity('');
-    setStartDate('');
-    setEndDate('');
+    setStartDate(undefined);
+    setEndDate(undefined);
     setRecruitmentOnly(false);
+  };
+
+  const formatDate = (date: Date) => {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
   };
 
   const handleUserSelect = (userName: string) => {
@@ -317,26 +323,30 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
-                <Label htmlFor="start-date" className="text-xs">
+                <Label className="text-xs">
                   開始日以降
                 </Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-left h-9 text-sm"
+                  onClick={() => setShowStartCalendar(true)}
+                >
+                  {startDate ? formatDate(startDate) : '日付を選択'}
+                </Button>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="end-date" className="text-xs">
+                <Label className="text-xs">
                   終了日以前
                 </Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-left h-9 text-sm"
+                  onClick={() => setShowEndCalendar(true)}
+                >
+                  {endDate ? formatDate(endDate) : '日付を選択'}
+                </Button>
               </div>
             </div>
 
@@ -419,6 +429,70 @@ export function SearchDrawer({ trips, isOpen, onClose }: SearchDrawerProps) {
             )}
           </div>
         </div>
+
+        {/* 開始日カレンダー */}
+        <Sheet open={showStartCalendar} onOpenChange={setShowStartCalendar}>
+          <SheetContent side="bottom" className="h-auto">
+            <SheetHeader>
+              <SheetTitle>開始日を選択</SheetTitle>
+              <SheetDescription>検索する開始日をカレンダーから選んでください</SheetDescription>
+            </SheetHeader>
+            <div className="flex justify-center py-4">
+              <CalendarComponent
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => {
+                  setStartDate(date);
+                  setShowStartCalendar(false);
+                }}
+              />
+            </div>
+            <div className="pb-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setStartDate(undefined);
+                  setShowStartCalendar(false);
+                }}
+              >
+                クリア
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* 終了日カレンダー */}
+        <Sheet open={showEndCalendar} onOpenChange={setShowEndCalendar}>
+          <SheetContent side="bottom" className="h-auto">
+            <SheetHeader>
+              <SheetTitle>終了日を選択</SheetTitle>
+              <SheetDescription>検索する終了日をカレンダーから選んでください</SheetDescription>
+            </SheetHeader>
+            <div className="flex justify-center py-4">
+              <CalendarComponent
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => {
+                  setEndDate(date);
+                  setShowEndCalendar(false);
+                }}
+              />
+            </div>
+            <div className="pb-4">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setEndDate(undefined);
+                  setShowEndCalendar(false);
+                }}
+              >
+                クリア
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </DrawerContent>
     </Drawer>
   );

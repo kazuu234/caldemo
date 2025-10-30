@@ -765,16 +765,6 @@
     height: calc(var(--spacing) * 4);
   }
 
-  .size-7 {
-    width: calc(var(--spacing) * 7);
-    height: calc(var(--spacing) * 7);
-  }
-
-  .size-8 {
-    width: calc(var(--spacing) * 8);
-    height: calc(var(--spacing) * 8);
-  }
-
   .size-9 {
     width: calc(var(--spacing) * 9);
     height: calc(var(--spacing) * 9);
@@ -940,6 +930,10 @@
 
   .w-8 {
     width: calc(var(--spacing) * 8);
+  }
+
+  .w-9 {
+    width: calc(var(--spacing) * 9);
   }
 
   .w-10 {
@@ -1668,6 +1662,10 @@
     padding-bottom: calc(var(--spacing) * 3);
   }
 
+  .pb-4 {
+    padding-bottom: calc(var(--spacing) * 4);
+  }
+
   .pb-6 {
     padding-bottom: calc(var(--spacing) * 6);
   }
@@ -1725,10 +1723,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
   }
 
-  .text-\[0\.8rem\] {
-    font-size: .8rem;
-  }
-
   .text-\[10px\] {
     font-size: 10px;
   }
@@ -1761,6 +1755,10 @@
   .tracking-tight {
     --tw-tracking: var(--tracking-tight);
     letter-spacing: var(--tracking-tight);
+  }
+
+  .break-words {
+    overflow-wrap: break-word;
   }
 
   .whitespace-nowrap {
@@ -2344,8 +2342,14 @@
     background-color: var(--accent);
   }
 
-  .aria-selected\:bg-primary[aria-selected="true"] {
-    background-color: var(--primary);
+  .aria-selected\:bg-accent\/50[aria-selected="true"] {
+    background-color: var(--accent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .aria-selected\:bg-accent\/50[aria-selected="true"] {
+      background-color: color-mix(in oklab, var(--accent) 50%, transparent);
+    }
   }
 
   .aria-selected\:text-accent-foreground[aria-selected="true"] {
@@ -2356,8 +2360,8 @@
     color: var(--muted-foreground);
   }
 
-  .aria-selected\:text-primary-foreground[aria-selected="true"] {
-    color: var(--primary-foreground);
+  .aria-selected\:opacity-30[aria-selected="true"] {
+    opacity: .3;
   }
 
   .aria-selected\:opacity-100[aria-selected="true"] {
@@ -2669,6 +2673,22 @@
   }
 
   @media (width >= 40rem) {
+    :where(.sm\:space-y-0 > :not(:last-child)) {
+      --tw-space-y-reverse: 0;
+      margin-block-start: calc(calc(var(--spacing) * 0) * var(--tw-space-y-reverse));
+      margin-block-end: calc(calc(var(--spacing) * 0) * calc(1 - var(--tw-space-y-reverse)));
+    }
+  }
+
+  @media (width >= 40rem) {
+    :where(.sm\:space-x-4 > :not(:last-child)) {
+      --tw-space-x-reverse: 0;
+      margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
+      margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
+    }
+  }
+
+  @media (width >= 40rem) {
     .sm\:text-left {
       text-align: left;
     }
@@ -2809,20 +2829,6 @@
     color: var(--muted-foreground);
   }
 
-  .\[\&\:has\(\>\.day-range-end\)\]\:rounded-r-md:has( > .day-range-end) {
-    border-top-right-radius: calc(var(--radius)  - 2px);
-    border-bottom-right-radius: calc(var(--radius)  - 2px);
-  }
-
-  .\[\&\:has\(\>\.day-range-start\)\]\:rounded-l-md:has( > .day-range-start) {
-    border-top-left-radius: calc(var(--radius)  - 2px);
-    border-bottom-left-radius: calc(var(--radius)  - 2px);
-  }
-
-  .\[\&\:has\(\[aria-selected\]\)\]\:rounded-md:has([aria-selected]) {
-    border-radius: calc(var(--radius)  - 2px);
-  }
-
   .\[\&\:has\(\[aria-selected\]\)\]\:bg-accent:has([aria-selected]) {
     background-color: var(--accent);
   }
@@ -2835,6 +2841,16 @@
   .last\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-r-md:last-child:has([aria-selected]) {
     border-top-right-radius: calc(var(--radius)  - 2px);
     border-bottom-right-radius: calc(var(--radius)  - 2px);
+  }
+
+  .\[\&\:has\(\[aria-selected\]\.day-outside\)\]\:bg-accent\/50:has([aria-selected].day-outside) {
+    background-color: var(--accent);
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .\[\&\:has\(\[aria-selected\]\.day-outside\)\]\:bg-accent\/50:has([aria-selected].day-outside) {
+      background-color: color-mix(in oklab, var(--accent) 50%, transparent);
+    }
   }
 
   .\[\&\:has\(\[aria-selected\]\.day-range-end\)\]\:rounded-r-md:has([aria-selected].day-range-end) {
@@ -3018,6 +3034,62 @@
 
 html {
   font-size: var(--font-size);
+}
+
+.rdp-month_grid {
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  display: table !important;
+}
+
+.rdp-month_grid thead {
+  display: table-header-group !important;
+}
+
+.rdp-weekdays {
+  display: table-row !important;
+}
+
+.rdp-weekday {
+  vertical-align: middle !important;
+  text-align: center !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  font-size: .875rem !important;
+  line-height: 1.25rem !important;
+  display: table-cell !important;
+}
+
+.rdp-weeks {
+  display: table-row-group !important;
+}
+
+.rdp-week {
+  display: table-row !important;
+}
+
+.rdp-week td {
+  vertical-align: middle !important;
+  text-align: center !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0 !important;
+  display: table-cell !important;
+}
+
+.rdp-month {
+  display: block !important;
+}
+
+.rdp-day_button {
+  text-align: center !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  margin: 0 auto !important;
+  display: block !important;
 }
 
 @property --tw-translate-x {

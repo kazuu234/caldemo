@@ -187,3 +187,60 @@
 html {
   font-size: var(--font-size);
 }
+
+/* React Day Picker table layout fix */
+.rdp-month_grid { 
+  display: table !important;
+  width: 100% !important;
+  max-width: 280px !important;
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+}
+
+.rdp-month_grid thead { 
+  display: table-header-group !important;
+}
+
+.rdp-weekdays { 
+  display: table-row !important;
+}
+
+.rdp-weekday {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  text-align: center !important;
+  padding: 0 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+
+.rdp-weeks {
+  display: table-row-group !important;
+}
+
+.rdp-week {
+  display: table-row !important;
+}
+
+.rdp-week td {
+  display: table-cell !important;
+  vertical-align: middle !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  text-align: center !important;
+  padding: 0 !important;
+}
+
+.rdp-month { 
+  display: block !important;
+}
+
+.rdp-day_button {
+  display: block !important;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  text-align: center !important;
+  margin: 0 auto !important;
+}
