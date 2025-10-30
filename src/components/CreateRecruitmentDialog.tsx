@@ -616,7 +616,7 @@ export function CreateRecruitmentDialog({
                 >
                   <span className="text-gray-900">Discord連携</span>
                   <p className="text-xs text-gray-600 mt-0.5">
-                    コミュニティ��ロンに募集を投稿します
+                    コミュニティサロンに募集を投稿します
                   </p>
                 </label>
               </div>

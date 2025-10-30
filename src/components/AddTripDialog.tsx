@@ -200,7 +200,7 @@ export function AddTripDialog({ isOpen, onClose, onAdd, initialDate, authUser }:
                   className="w-full h-9 justify-start text-left text-sm"
                   onClick={() => {
                     if (!country) {
-                      alert('まず国を��択してください');
+                      alert('まず国を選択してください');
                       return;
                     }
                     setShowCitySheet(true);

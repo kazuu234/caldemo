@@ -334,7 +334,7 @@ export default function App() {
     }
   }, [authUser]);
 
-  // 初回マウント時に���知の許可をリクエストと未読数を取得、通知チェック
+  // 初回マウント時に通知の許可をリクエストと未読数を取得、通知チェック
   useEffect(() => {
     if (authUser) {
       requestNotificationPermission();
@@ -480,7 +480,7 @@ export default function App() {
 
     // Discord連携が新しく有効になった場合はトースト表示
     if (updatedTrip.discordLinked && !originalTrip?.discordLinked) {
-      toast.success('サロンへの募集投稿が完了し��した', {
+      toast.success('サロンへの募集投稿が完了しました', {
         description: 'Discordに合流募集が投稿されました',
       });
     }
@@ -675,7 +675,7 @@ export default function App() {
   const handleAddClick = () => {
     // 認証チェック（オプショナル - 未認証でも追加可能）
     if (!authUser) {
-      toast.info('ログインすると予定管理が便��になります', {
+      toast.info('ログインすると予定管理が便利になります', {
         description: 'ログインしなくても予定は追加できます',
         action: {
           label: 'ログイン',
@@ -803,7 +803,7 @@ export default function App() {
                 {activeView === 'everyone' ? '旅行予定' : activeView === 'mine' ? '自分の旅行予定' : activeView === 'recruitments' ? '合流募集' : 'オフ会、イベント'}
               </h1>
               <p className="text-gray-600 text-sm">
-                {activeView === 'everyone' ? '仲間と合流しよう' : activeView === 'mine' ? '予定を管理しましょう' : activeView === 'recruitments' ? '一緒に旅行しませんか' : '日本で集まろう'}
+                {activeView === 'everyone' ? '仲間と合流しよう' : activeView === 'mine' ? '予定を管理しましょう' : activeView === 'recruitments' ? '一緒に旅行しませんか' : 'オフ会に参加しよう！'}
               </p>
             </div>
             <div className="flex gap-2 items-center">
