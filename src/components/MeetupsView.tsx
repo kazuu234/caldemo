@@ -59,6 +59,7 @@ export function MeetupsView({
   onVoteDate,
 }: MeetupsViewProps) {
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<Trip | null>(null);
+  const [hideConfirmTrip, setHideConfirmTrip] = useState<Trip | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [showParticipantsSheet, setShowParticipantsSheet] = useState(false);
   const [participantSearch, setParticipantSearch] = useState('');
@@ -373,7 +374,13 @@ export function MeetupsView({
                   size="sm"
                   variant="ghost"
                   className="w-full"
-                  onClick={() => onToggleHidden(trip.id)}
+                  onClick={() => {
+                    if (trip.isHidden) {
+                      onToggleHidden(trip.id);
+                    } else {
+                      setHideConfirmTrip(trip);
+                    }
+                  }}
                 >
                   {trip.isHidden ? (
                     <>
@@ -404,7 +411,37 @@ export function MeetupsView({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm}>削除</AlertDialogAction>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              削除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* 非表示確認ダイアログ */}
+      <AlertDialog open={!!hideConfirmTrip} onOpenChange={(open) => !open && setHideConfirmTrip(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>オフ会を非表示にしますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              このオフ会は「みんなのオフ会」から非表示になります。いつでも再表示できます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (hideConfirmTrip && onToggleHidden) {
+                  onToggleHidden(hideConfirmTrip.id);
+                  setHideConfirmTrip(null);
+                }
+              }}
+            >
+              非表示にする
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

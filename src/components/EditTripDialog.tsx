@@ -43,8 +43,10 @@ export function EditTripDialog({
   const [isHidden, setIsHidden] = useState(false);
   const [minParticipants, setMinParticipants] = useState<string>('');
   const [maxParticipants, setMaxParticipants] = useState<string>('');
+  const [candidateDates, setCandidateDates] = useState<Date[]>([]);
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [showCandidateDateCalendar, setShowCandidateDateCalendar] = useState(false);
   const [showCountrySheet, setShowCountrySheet] = useState(false);
   const [showCitySheet, setShowCitySheet] = useState(false);
 
@@ -63,6 +65,7 @@ export function EditTripDialog({
       setIsHidden(trip.isHidden || false);
       setMinParticipants(trip.minParticipants?.toString() || '');
       setMaxParticipants(trip.maxParticipants?.toString() || '');
+      setCandidateDates(trip.candidateDates || []);
     }
   }, [trip, isOpen]);
 
@@ -102,6 +105,9 @@ export function EditTripDialog({
       isHidden,
       minParticipants: isRecruitment ? minNum : undefined,
       maxParticipants: isRecruitment ? maxNum : undefined,
+      candidateDates: trip.type === 'meetup' ? candidateDates : undefined,
+      // dateVotesは保持（編集時に投票データを失わないように）
+      dateVotes: trip.dateVotes,
     };
 
     onSave(updatedTrip);
@@ -160,33 +166,78 @@ export function EditTripDialog({
               </div>
             )}
 
-            <div>
-              <Label htmlFor="edit-startDate">開始日</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setShowStartCalendar(true)}
-              >
-                {startDate
-                  ? format(startDate, 'yyyy年M月d日(E)', { locale: ja })
-                  : '日付を選択'}
-              </Button>
-            </div>
+            {trip.type === 'meetup' ? (
+              <div>
+                <Label>候補日</Label>
+                <div className="space-y-2">
+                  {candidateDates.length > 0 ? (
+                    candidateDates.map((date, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="flex-1 justify-start"
+                          disabled
+                        >
+                          {format(date, 'yyyy年M月d日(E) HH:mm', { locale: ja })}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setCandidateDates(candidateDates.filter((_, i) => i !== index));
+                          }}
+                          className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500">候補日が設定されていません</p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowCandidateDateCalendar(true)}
+                  >
+                    + 候補日を追加
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label htmlFor="edit-startDate">開始日</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => setShowStartCalendar(true)}
+                  >
+                    {startDate
+                      ? format(startDate, 'yyyy年M月d日(E)', { locale: ja })
+                      : '日付を選択'}
+                  </Button>
+                </div>
 
-            <div>
-              <Label htmlFor="edit-endDate">終了日</Label>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full justify-start"
-                onClick={() => setShowEndCalendar(true)}
-              >
-                {endDate
-                  ? format(endDate, 'yyyy年M月d日(E)', { locale: ja })
-                  : '日付を選択'}
-              </Button>
-            </div>
+                <div>
+                  <Label htmlFor="edit-endDate">終了日</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => setShowEndCalendar(true)}
+                  >
+                    {endDate
+                      ? format(endDate, 'yyyy年M月d日(E)', { locale: ja })
+                      : '日付を選択'}
+                  </Button>
+                </div>
+              </>
+            )}
 
             <div>
               <Label htmlFor="edit-description">メモ（任意）</Label>
@@ -351,6 +402,31 @@ export function EditTripDialog({
                 setShowEndCalendar(false);
               }}
               disabled={(date) => startDate ? date < startDate : false}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* 候補日カレンダー（オフ会用） */}
+      <Sheet open={showCandidateDateCalendar} onOpenChange={setShowCandidateDateCalendar}>
+        <SheetContent side="bottom" className="h-auto">
+          <SheetHeader>
+            <SheetTitle>候補日を追加</SheetTitle>
+            <SheetDescription>オフ会の候補日をカレンダーから選んでください</SheetDescription>
+          </SheetHeader>
+          <div className="flex justify-center py-4">
+            <Calendar
+              mode="single"
+              selected={undefined}
+              onSelect={(date) => {
+                if (date) {
+                  // デフォルトで12:00に設定
+                  const newDate = new Date(date);
+                  newDate.setHours(12, 0, 0, 0);
+                  setCandidateDates([...candidateDates, newDate]);
+                  setShowCandidateDateCalendar(false);
+                }
+              }}
             />
           </div>
         </SheetContent>

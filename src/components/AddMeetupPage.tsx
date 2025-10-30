@@ -29,6 +29,8 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
   const [recruitmentDetails, setRecruitmentDetails] = useState(''); // 募集内容
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [startTime, setStartTime] = useState('12:00');
+  const [endTime, setEndTime] = useState('18:00');
   const [minParticipants, setMinParticipants] = useState<string>('');
   const [maxParticipants, setMaxParticipants] = useState<string>('');
   const [showStartCalendar, setShowStartCalendar] = useState(false);
@@ -39,6 +41,7 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
   const [useCandidateDates, setUseCandidateDates] = useState(false);
   const [candidateDates, setCandidateDates] = useState<Date[]>([]);
   const [showCandidateDateCalendar, setShowCandidateDateCalendar] = useState(false);
+  const [candidateTime, setCandidateTime] = useState('12:00');
 
   // 認証ユーザーが変わったら名前を更新
   useEffect(() => {
@@ -85,6 +88,20 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
       return;
     }
 
+    // 開始日・終了日に時間を適用
+    const finalStartDate = startDate ? new Date(startDate) : new Date();
+    const finalEndDate = endDate ? new Date(endDate) : (startDate ? new Date(startDate) : new Date());
+    
+    if (startDate && startTime) {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      finalStartDate.setHours(hours, minutes, 0, 0);
+    }
+    
+    if (endDate && endTime) {
+      const [hours, minutes] = endTime.split(':').map(Number);
+      finalEndDate.setHours(hours, minutes, 0, 0);
+    }
+
     const newTrip: Omit<Trip, 'id'> = {
       type: 'meetup',
       userDiscordId: authUser.discordId,
@@ -92,8 +109,8 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
       userAvatar: authUser.avatar,
       country,
       city,
-      startDate: startDate || new Date(), // 日付未定の場合は今日を設定
-      endDate: endDate || startDate || new Date(),
+      startDate: finalStartDate,
+      endDate: finalEndDate,
       description: title, // タイトルをdescriptionに格納
       isOwn: true,
       isRecruitment: true, // オフ会は常に募集
@@ -133,8 +150,14 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
   };
 
   const handleAddCandidateDate = (date: Date | undefined) => {
-    if (date && !candidateDates.some(d => d.getTime() === date.getTime())) {
-      setCandidateDates([...candidateDates, date]);
+    if (date) {
+      const newDate = new Date(date);
+      const [hours, minutes] = candidateTime.split(':').map(Number);
+      newDate.setHours(hours, minutes, 0, 0);
+      
+      if (!candidateDates.some(d => d.getTime() === newDate.getTime())) {
+        setCandidateDates([...candidateDates, newDate]);
+      }
     }
     setShowCandidateDateCalendar(false);
   };
@@ -210,7 +233,7 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
             id="recruitmentDetails"
             value={recruitmentDetails}
             onChange={(e) => setRecruitmentDetails(e.target.value)}
-            placeholder="どんな人と何をしたいか詳しく���いてください（例：アニメやゲームが好きな方、一緒にカフェでお話しませんか？初心者でも大歓迎です！）"
+            placeholder="どんな人と何をしたいか詳しく書いてください（例：アニメやゲームが好きな方、一緒にカフェでお話しませんか？初心者でも大歓迎です！）"
             rows={4}
           />
         </div>
@@ -246,6 +269,16 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
                 </div>
                 {showCandidateDateCalendar && (
                   <div className="border rounded-lg p-3 bg-white shadow-lg">
+                    <div className="mb-3">
+                      <Label htmlFor="candidateTime" className="text-sm text-gray-500">時間</Label>
+                      <Input
+                        id="candidateTime"
+                        type="time"
+                        value={candidateTime}
+                        onChange={(e) => setCandidateTime(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
                     <Calendar
                       mode="single"
                       onSelect={handleAddCandidateDate}
@@ -261,7 +294,7 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
                         className="flex items-center justify-between p-2 border rounded"
                       >
                         <span className="text-sm">
-                          {format(date, 'M月d日(E)', { locale: ja })}
+                          {format(date, 'M月d日(E) HH:mm', { locale: ja })}
                         </span>
                         <Button
                           type="button"
@@ -279,18 +312,26 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
             </div>
           ) : (
             /* 通常の日程設定 */
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div className="space-y-2">
                 <Label className="text-sm text-gray-500">開始日</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setShowStartCalendar(!showStartCalendar)}
-                >
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {startDate ? format(startDate, 'M月d日', { locale: ja }) : '未定'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 justify-start"
+                    onClick={() => setShowStartCalendar(!showStartCalendar)}
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {startDate ? format(startDate, 'M月d日', { locale: ja }) : '未定'}
+                  </Button>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
                 {showStartCalendar && (
                   <div className="border rounded-lg p-3 bg-white shadow-lg absolute z-10">
                     <Calendar
@@ -308,15 +349,23 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
 
               <div className="space-y-2">
                 <Label className="text-sm text-gray-500">終了日</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setShowEndCalendar(!showEndCalendar)}
-                >
-                  <CalendarIcon className="w-4 h-4 mr-2" />
-                  {endDate ? format(endDate, 'M月d日', { locale: ja }) : '未定'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 justify-start"
+                    onClick={() => setShowEndCalendar(!showEndCalendar)}
+                  >
+                    <CalendarIcon className="w-4 h-4 mr-2" />
+                    {endDate ? format(endDate, 'M月d日', { locale: ja }) : '未定'}
+                  </Button>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-32"
+                  />
+                </div>
                 {showEndCalendar && (
                   <div className="border rounded-lg p-3 bg-white shadow-lg absolute z-10">
                     <Calendar
