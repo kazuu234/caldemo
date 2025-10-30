@@ -272,41 +272,41 @@ export function DiscordAuthDialog({ isOpen, onAuthSuccess }: DiscordAuthDialogPr
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
               </div>
-              <div className="text-center space-y-2">
+              <div className="text-center space-y-2 px-2">
                 <h3 className="font-medium">DMを送信しました</h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 break-words">
                   {selectedUser.displayName} (@{selectedUser.username}) のDiscordアカウントにDMを送信しました
                 </p>
               </div>
             </div>
 
             <Alert>
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className="h-4 w-4 flex-shrink-0" />
               <AlertDescription className="space-y-2">
-                <p>Discordを開き、Botからのダイレクトメッセージを確認してください。</p>
-                <p className="text-xs text-gray-600">
+                <p className="break-words">Discordを開き、Botからのダイレクトメッセージを確認してください。</p>
+                <p className="text-xs text-gray-600 break-words">
                   DMに記載されている認証URLをクリックすると、このアプリへの認証が完了します。
                 </p>
               </AlertDescription>
             </Alert>
 
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-xs text-blue-800">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-xs text-blue-800 break-words">
                 💡 DMが届かない場合は、サーバーのプライバシー設定で「ダイレクトメッセージを許可する」が有効になっているか確認してください。
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button
                 variant="outline"
                 onClick={handleBack}
-                className="flex-1"
+                className="flex-1 w-full"
               >
                 別のアカウントを選択
               </Button>
               <Button
                 onClick={handleTestAuth}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
+                className="flex-1 w-full bg-orange-600 hover:bg-orange-700"
               >
                 <Zap className="w-4 h-4 mr-2" />
                 テスト: 認証を完了
