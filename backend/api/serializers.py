@@ -1,5 +1,21 @@
 from rest_framework import serializers
-from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City
+from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City, UserProfile
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            "id",
+            "discord_id",
+            "username",
+            "display_name",
+            "discriminator",
+            "avatar",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class TripSerializer(serializers.ModelSerializer):

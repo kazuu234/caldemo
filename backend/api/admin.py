@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City
+from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City, UserProfile
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ("display_name", "username", "discord_id", "is_active")
+    search_fields = ("display_name", "username", "discord_id")
+    list_filter = ("is_active",)
 
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):

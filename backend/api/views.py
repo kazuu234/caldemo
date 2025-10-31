@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django.utils.dateparse import parse_date
-from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City
+from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City, UserProfile
 from .serializers import (
     TripSerializer,
     NotificationSerializer,
@@ -15,7 +15,16 @@ from .serializers import (
     RegionSerializer,
     CountrySerializer,
     CitySerializer,
+    UserProfileSerializer,
 )
+
+
+class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["username", "display_name", "discord_id"]
+    ordering = ["display_name", "username"]
 
 
 class TripViewSet(viewsets.ModelViewSet):

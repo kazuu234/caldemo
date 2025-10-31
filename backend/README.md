@@ -92,3 +92,17 @@ python manage.py load_geo_seed --clean
 - DB: SQLite（`server/settings.py`）
 - CORS: 開発中は `CORS_ALLOW_ALL_ORIGINS = True`
 - 認可: 開発用に `AllowAny`
+
+## ユーザー（追加）
+- モデル: `UserProfile(discord_id, username, display_name, discriminator, avatar, is_active)`
+- API（読み取り専用）:
+  - `GET /api/users/`（検索: `search=` ユーザー名/表示名/discord_id、並び替え: `ordering=`）
+  - `GET /api/users/{id}/`
+- データ投入（フロントTSのモックから）:
+```bash
+cd backend
+python manage.py migrate
+python manage.py load_users_seed --clean
+```
+
+他のエンドポイントや Geo の投入は前節を参照。
