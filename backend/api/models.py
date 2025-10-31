@@ -98,3 +98,42 @@ class DateVote(models.Model):
 
     class Meta:
         unique_together = ("proposal", "user_discord_id")
+
+
+class Region(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=32, unique=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Country(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=32, blank=True)
+    region = models.ForeignKey(Region, on_delete=models.PROTECT, related_name="countries")
+
+    class Meta:
+        unique_together = ("region", "name")
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class City(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)
+    country = models.ForeignKey(Country, on_delete=models.PROTECT, related_name="cities")
+
+    class Meta:
+        unique_together = ("country", "name")
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name

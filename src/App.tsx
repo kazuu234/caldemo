@@ -22,7 +22,6 @@ import {
   requestNotificationPermission, 
   showTripNotification, 
   showRecruitmentNotification,
-  getUnreadCount,
   clearUnreadCount,
   checkTripNotifications
 } from './utils/notifications';
@@ -33,6 +32,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from './components/ui/popover';
+import { TripsAPI, type Trip as ApiTrip } from './utils/api';
+import { DateProposalsAPI } from './utils/api';
 
 export interface Trip {
   id: string;
@@ -58,6 +59,30 @@ export interface Trip {
 }
 
 /**
+ * API Trip からフロント用 Trip への変換
+ */
+function mapApiTrip(api: ApiTrip): Trip {
+  return {
+    id: api.id,
+    type: api.type,
+    userDiscordId: api.user_discord_id,
+    userName: api.user_name || '',
+    userAvatar: api.user_avatar || '',
+    country: api.country,
+    city: api.city,
+    startDate: new Date(api.start_date),
+    endDate: new Date(api.end_date),
+    description: api.description,
+    isRecruitment: api.is_recruitment,
+    recruitmentDetails: api.recruitment_details,
+    isHidden: api.is_hidden,
+    minParticipants: api.min_participants ?? undefined,
+    maxParticipants: api.max_participants ?? undefined,
+    participants: api.participants || [],
+  };
+}
+
+/**
  * userDiscordIdからユーザー情報を取得してTripデータを正規化
  * authUserが渡された場合、isOwnフラグも設定する
  */
@@ -69,7 +94,6 @@ function normalizeTrip(trip: Trip, authUser?: AuthUser | null): Trip {
     userAvatar: userData?.avatar || trip.userAvatar,
   };
   
-  // authUserが渡された場合、isOwnフラグを設定
   if (authUser) {
     normalized.isOwn = trip.userDiscordId === authUser.discordId;
   }
@@ -79,185 +103,14 @@ function normalizeTrip(trip: Trip, authUser?: AuthUser | null): Trip {
 
 // モックデータ
 const initialTrips: Trip[] = [
-  {
-    id: '1',
-    type: 'trip',
-    userDiscordId: '123456789012345678',
-    userName: '田中太郎',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Tanaka',
-    country: '日本',
-    city: '東京',
-    startDate: new Date(2025, 10, 5),
-    endDate: new Date(2025, 10, 10),
-    description: '紅葉シーズンの京都観光',
-  },
-  {
-    id: '2',
-    type: 'trip',
-    userDiscordId: '234567890123456789',
-    userName: '佐藤花子',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sato',
-    country: 'タイ',
-    city: 'バンコク',
-    startDate: new Date(2025, 10, 15),
-    endDate: new Date(2025, 10, 20),
-    description: 'タイ料理とナイトマーケット巡り',
-    isRecruitment: true,
-    recruitmentDetails: '初めてのバンコクなので、一緒に観光できる方を募集しています！ナイトマーケットやタイ料理を楽しみたいです。女性の方大歓迎です。',
-    minParticipants: 2,
-    maxParticipants: 4,
-    participants: ['456789012345678901'], // 高橋健太
-  },
-  {
-    id: '3',
-    type: 'trip',
-    userDiscordId: '345678901234567890',
-    userName: '鈴木一郎',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suzuki',
-    country: 'フランス',
-    city: 'パリ',
-    startDate: new Date(2025, 10, 8),
-    endDate: new Date(2025, 10, 15),
-    description: '美術館巡りとカフェ探索',
-  },
-  {
-    id: '4',
-    type: 'trip',
-    userDiscordId: '567890123456789012',
-    userName: '山田美咲',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Yamada',
-    country: 'アメリカ',
-    city: 'ニューヨーク',
-    startDate: new Date(2025, 10, 12),
-    endDate: new Date(2025, 10, 18),
-    description: 'ブロードウェイと美術館巡り',
-    isRecruitment: true,
-    recruitmentDetails: 'ブロードウェイのミュージカル鑑賞とMoMAやメトロポリタン美術館巡りを予定しています。アート好きな方、ご一緒しませんか？',
-    minParticipants: 1,
-    maxParticipants: 3,
-    participants: ['678901234567890123', '345678901234567890'], // 伊藤さくら、鈴木一郎
-  },
-  {
-    id: '5',
-    type: 'trip',
-    userDiscordId: '456789012345678901',
-    userName: '高橋健太',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Takahashi',
-    country: 'タイ',
-    city: 'バンコク',
-    startDate: new Date(2025, 10, 16),
-    endDate: new Date(2025, 10, 21),
-    description: '寺院巡りとタイマッサージ',
-  },
-  {
-    id: '6',
-    type: 'trip',
-    userDiscordId: '678901234567890123',
-    userName: '伊藤さくら',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Ito',
-    country: 'イタリア',
-    city: 'ローマ',
-    startDate: new Date(2025, 10, 20),
-    endDate: new Date(2025, 10, 27),
-    description: '古代遺跡とイタリア料理を堪能',
-    isRecruitment: true,
-    recruitmentDetails: 'コロッセオやトレヴィの泉など、定番スポットを巡ります。本格的なイタリア料理も楽しみたいです。写真好きな方歓迎！',
-    maxParticipants: 5,
-  },
-  {
-    id: '7',
-    type: 'trip',
-    userDiscordId: '789012345678901234',
-    userName: '渡辺隆',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Watanabe',
-    country: 'スペイン',
-    city: 'バルセロナ',
-    startDate: new Date(2025, 11, 1),
-    endDate: new Date(2025, 11, 7),
-    description: 'サグラダファミリアとビーチ',
-  },
-  {
-    id: '8',
-    type: 'trip',
-    userDiscordId: '890123456789012345',
-    userName: '中村直樹',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Nakamura',
-    country: 'タイ',
-    city: 'プーケット',
-    startDate: new Date(2025, 11, 5),
-    endDate: new Date(2025, 11, 12),
-    description: 'ビーチリゾートとダイビング',
-    isRecruitment: true,
-    minParticipants: 3,
-  },
-  // オフ会データ
-  {
-    id: 'meetup1',
-    type: 'meetup',
-    userDiscordId: '234567890123456789',
-    userName: '佐藤花子',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sato',
-    country: '日本',
-    city: '東京',
-    startDate: new Date(2025, 10, 10),
-    endDate: new Date(2025, 10, 10),
-    description: '渋谷でアニメ・ゲーム好きのオフ会！カフェで楽しくお話しましょう',
-    isRecruitment: true,
-    recruitmentDetails: 'アニメやゲームが好きな方、一緒にカフェでお話しませんか？初心者でも大歓迎です！',
-    minParticipants: 3,
-    maxParticipants: 8,
-    participants: [],
-  },
-  {
-    id: 'meetup2',
-    type: 'meetup',
-    userDiscordId: '234567890123456789',
-    userName: '佐藤花子',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sato',
-    country: '日本',
-    city: '大阪',
-    startDate: new Date(2025, 10, 15),
-    endDate: new Date(2025, 10, 15),
-    description: '梅田でランチオフ会！日程調整中',
-    isRecruitment: true,
-    recruitmentDetails: '美味しいランチを食べながら交流しましょう！20代〜30代の方歓迎です。下記の候補日から都合の良い日に投票してください。',
-    minParticipants: 2,
-    maxParticipants: 6,
-    candidateDates: [
-      new Date(2025, 10, 15, 12, 0),
-      new Date(2025, 10, 22, 12, 0),
-      new Date(2025, 10, 29, 13, 0),
-    ],
-    dateVotes: {
-      [new Date(2025, 10, 15, 12, 0).toISOString()]: ['567890123456789012'],
-      [new Date(2025, 10, 22, 12, 0).toISOString()]: ['567890123456789012', '456789012345678901'],
-      [new Date(2025, 10, 29, 13, 0).toISOString()]: ['567890123456789012'],
-    },
-    participants: ['567890123456789012', '456789012345678901'], // 山田美咲、高橋健太
-  },
-  {
-    id: 'meetup3',
-    type: 'meetup',
-    userDiscordId: '345678901234567890',
-    userName: '鈴木一郎',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Suzuki',
-    country: '日本',
-    city: '名古屋',
-    startDate: new Date(2025, 10, 20),
-    endDate: new Date(2025, 10, 20),
-    description: 'ボードゲームオフ会@名古屋駅近く',
-    isRecruitment: true,
-    recruitmentDetails: 'ボードゲームカフェで遊びましょう！初心者も経験者も大歓迎です。',
-    minParticipants: 4,
-    maxParticipants: 10,
-    participants: ['456789012345678901', '678901234567890123'], // 高橋健太、伊藤さくら
-  },
+  // 既存のモックは残すが、認証後にAPIで上書きする
 ];
 
 export default function App() {
   const [authUser, setAuthUserState] = useState<AuthUser | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [trips, setTrips] = useState<Trip[]>(initialTrips);
+  const [proposalIdByDate, setProposalIdByDate] = useState<Record<string, Record<string, string>>>({});
   
   // tripsデータを正規化（userDiscordIdからユーザー情報を取得 & isOwnフラグを設定）
   const normalizedTrips = trips.map(trip => normalizeTrip(trip, authUser));
@@ -316,6 +169,48 @@ export default function App() {
     console.log('🟢 認証状態が変更されました:', authUser ? authUser.displayName : '未認証');
   }, [authUser]);
 
+  // 認証ユーザーが確定したらサーバからTripsを取得
+  useEffect(() => {
+    const loadTrips = async () => {
+      if (!authUser) return;
+      try {
+        const data = await TripsAPI.list();
+        const mapped = data.map(mapApiTrip);
+        setTrips(mapped);
+        // ミートアップの候補日・投票を読み込み
+        const meetupTrips = mapped.filter(t => t.type === 'meetup');
+        const proposalMapUpdates: Record<string, Record<string, string>> = {};
+        const updatedTrips: Record<string, Trip> = Object.fromEntries(mapped.map(t => [t.id, t]));
+        for (const mt of meetupTrips) {
+          try {
+            const proposals = await DateProposalsAPI.list(mt.id);
+            const dateToId: Record<string, string> = {};
+            const dateVotes: { [dateString: string]: string[] } = {};
+            for (const p of proposals) {
+              dateToId[p.date] = p.id;
+              try {
+                const votes = await DateProposalsAPI.votes(p.id);
+                dateVotes[p.date] = votes.map(v => v.user_discord_id);
+              } catch {}
+            }
+            proposalMapUpdates[mt.id] = dateToId;
+            updatedTrips[mt.id] = {
+              ...updatedTrips[mt.id],
+              candidateDates: Object.keys(dateToId).map(d => new Date(d)),
+              dateVotes,
+            };
+          } catch {}
+        }
+        if (Object.keys(proposalMapUpdates).length > 0) setProposalIdByDate(proposalMapUpdates);
+        setTrips(Object.values(updatedTrips));
+      } catch (e) {
+        console.error(e);
+        toast.error('予定の読み込みに失敗しました');
+      }
+    };
+    loadTrips();
+  }, [authUser]);
+
   // 認証ユーザーが変わったら、自分の予定（isOwn: true）のデモデータを更新
   useEffect(() => {
     if (authUser) {
@@ -338,7 +233,10 @@ export default function App() {
   useEffect(() => {
     if (authUser) {
       requestNotificationPermission();
-      setUnreadCountState(getUnreadCount());
+      (async () => {
+        const c = await (await import('./utils/notifications')).fetchUnreadCount();
+        setUnreadCountState(c);
+      })();
       // 予定の通知チェック（前日・当日通知）
       checkTripNotifications(trips);
     }
@@ -346,9 +244,10 @@ export default function App() {
 
   // 未読数を定期的に更新（他のタブで変更された場合も反映）
   useEffect(() => {
-    const interval = setInterval(() => {
-      setUnreadCountState(getUnreadCount());
-    }, 1000);
+    const interval = setInterval(async () => {
+      const c = await (await import('./utils/notifications')).fetchUnreadCount();
+      setUnreadCountState(c);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -399,8 +298,11 @@ export default function App() {
       } else {
         showTripNotification(lastTrip);
       }
-      // 未読数を更新
-      setUnreadCountState(getUnreadCount());
+      // 未読数を更新（ローカル反映）
+      (async () => {
+        const c = await (await import('./utils/notifications')).fetchUnreadCount();
+        setUnreadCountState(c);
+      })();
     }
   }, [trips]);
 
@@ -448,22 +350,40 @@ export default function App() {
     });
   })();
 
-  const handleAddTrip = (newTrip: Omit<Trip, 'id'>) => {
-    const trip: Trip = {
-      ...newTrip,
-      id: Date.now().toString(),
-      isOwn: true, // 追加した予定は自分の予定
-    };
-    setTrips([...trips, trip]);
-    setShowAddPage(false);
-    setShowAddMeetupPage(false);
-    setShowAddDialog(false);
+  const handleAddTrip = async (newTrip: Omit<Trip, 'id'>) => {
+    try {
+      const created = await TripsAPI.create({
+        type: newTrip.type,
+        user_discord_id: newTrip.userDiscordId,
+        user_name: newTrip.userName,
+        user_avatar: newTrip.userAvatar,
+        country: newTrip.country,
+        city: newTrip.city,
+        start_date: newTrip.startDate.toISOString().slice(0, 10),
+        end_date: newTrip.endDate.toISOString().slice(0, 10),
+        description: newTrip.description,
+        is_recruitment: newTrip.isRecruitment,
+        recruitment_details: newTrip.recruitmentDetails,
+        min_participants: newTrip.minParticipants,
+        max_participants: newTrip.maxParticipants,
+        participants: newTrip.participants,
+        is_hidden: newTrip.isHidden,
+      } as any);
+      const mapped = mapApiTrip(created);
+      mapped.isOwn = true;
+      setTrips([...trips, mapped]);
+      setShowAddPage(false);
+      setShowAddMeetupPage(false);
+      setShowAddDialog(false);
 
-    // Discord連携がある場合はトースト表示
-    if (newTrip.discordLinked) {
-      toast.success('サロンへの募集投稿が完了しました', {
-        description: 'Discordに合流募集が投稿されました',
-      });
+      if (newTrip.discordLinked) {
+        toast.success('サロンへの募集投稿が完了しました', {
+          description: 'Discordに合流募集が投稿されました',
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('予定の作成に失敗しました');
     }
   };
 
@@ -472,57 +392,81 @@ export default function App() {
     setShowEditDialog(true);
   };
 
-  const handleSaveTrip = (updatedTrip: Trip) => {
-    const originalTrip = trips.find(t => t.id === updatedTrip.id);
-    setTrips(trips.map(t => t.id === updatedTrip.id ? updatedTrip : t));
-    setShowEditDialog(false);
-    setEditingTrip(null);
+  const handleSaveTrip = async (updatedTrip: Trip) => {
+    try {
+      const saved = await TripsAPI.update(updatedTrip.id, {
+        type: updatedTrip.type,
+        user_discord_id: updatedTrip.userDiscordId,
+        user_name: updatedTrip.userName,
+        user_avatar: updatedTrip.userAvatar,
+        country: updatedTrip.country,
+        city: updatedTrip.city,
+        start_date: updatedTrip.startDate.toISOString().slice(0, 10),
+        end_date: updatedTrip.endDate.toISOString().slice(0, 10),
+        description: updatedTrip.description,
+        is_recruitment: updatedTrip.isRecruitment,
+        recruitment_details: updatedTrip.recruitmentDetails,
+        min_participants: updatedTrip.minParticipants,
+        max_participants: updatedTrip.maxParticipants,
+        participants: updatedTrip.participants,
+        is_hidden: updatedTrip.isHidden,
+      } as any);
+      const mapped = mapApiTrip(saved);
+      const originalTrip = trips.find(t => t.id === updatedTrip.id);
+      setTrips(trips.map(t => t.id === updatedTrip.id ? mapped : t));
+      setShowEditDialog(false);
+      setEditingTrip(null);
 
-    // Discord連携が新しく有効になった場合はトースト表示
-    if (updatedTrip.discordLinked && !originalTrip?.discordLinked) {
-      toast.success('サロンへの募集投稿が完了しました', {
-        description: 'Discordに合流募集が投稿されました',
-      });
+      if (updatedTrip.discordLinked && !originalTrip?.discordLinked) {
+        toast.success('サロンへの募集投稿が完了しました', {
+          description: 'Discordに合流募集が投稿されました',
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('予定の更新に失敗しました');
     }
   };
 
-  const handleDeleteTrip = (tripId: string) => {
-    setTrips(trips.filter(t => t.id !== tripId));
+  const handleDeleteTrip = async (tripId: string) => {
+    try {
+      await TripsAPI.remove(tripId);
+      setTrips(trips.filter(t => t.id !== tripId));
+    } catch (e) {
+      console.error(e);
+      toast.error('予定の削除に失敗しました');
+    }
   };
 
-  const handleToggleHidden = (tripId: string) => {
-    setTrips(trips.map(t => {
-      if (t.id === tripId) {
-        const newIsHidden = !t.isHidden;
-        // 非表示にする場合は、合流募集も解除
-        if (newIsHidden && t.isRecruitment) {
-          return { 
-            ...t, 
-            isHidden: newIsHidden,
-            isRecruitment: false,
-            recruitmentDetails: undefined,
-            discordLinked: false
-          };
-        }
-        return { ...t, isHidden: newIsHidden };
+  const handleToggleHidden = async (tripId: string) => {
+    try {
+      const current = trips.find(t => t.id === tripId);
+      const res = await TripsAPI.toggleHidden(tripId, current ? !current.isHidden : undefined);
+      const mapped = mapApiTrip(res);
+      setTrips(trips.map(t => t.id === tripId ? { ...mapped } : t));
+    } catch (e) {
+      console.error(e);
+      toast.error('表示設定の更新に失敗しました');
+    }
+  };
+
+  const handleToggleRecruitment = async (trip: Trip) => {
+    try {
+      if (trip.isRecruitment) {
+        const res = await TripsAPI.endRecruitment(trip.id);
+        const mapped = mapApiTrip(res);
+        setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+      } else {
+        const res = await TripsAPI.toggleRecruitment(trip.id, true);
+        const mapped = mapApiTrip(res);
+        setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+        setRecruitmentTrip(mapped);
+        setIsEditingRecruitment(false);
+        setShowRecruitmentDialog(true);
       }
-      return t;
-    }));
-  };
-
-  const handleToggleRecruitment = (trip: Trip) => {
-    if (trip.isRecruitment) {
-      // 募集を終了
-      setTrips(trips.map(t => 
-        t.id === trip.id 
-          ? { ...t, isRecruitment: false, recruitmentDetails: undefined, discordLinked: false } 
-          : t
-      ));
-    } else {
-      // 合流募集を作成
-      setRecruitmentTrip(trip);
-      setIsEditingRecruitment(false);
-      setShowRecruitmentDialog(true);
+    } catch (e) {
+      console.error(e);
+      toast.error('募集設定の更新に失敗しました');
     }
   };
 
@@ -532,125 +476,118 @@ export default function App() {
     setShowRecruitmentDialog(true);
   };
 
-  const handleSaveRecruitment = (updatedTrip: Trip, discordLinked: boolean) => {
-    const originalTrip = trips.find(t => t.id === updatedTrip.id);
-    setTrips(trips.map(t => t.id === updatedTrip.id ? updatedTrip : t));
-    setShowRecruitmentDialog(false);
-    setRecruitmentTrip(null);
-    setIsEditingRecruitment(false);
+  const handleSaveRecruitment = async (updatedTrip: Trip, discordLinked: boolean) => {
+    try {
+      const saved = await TripsAPI.update(updatedTrip.id, {
+        is_recruitment: updatedTrip.isRecruitment,
+        recruitment_details: updatedTrip.recruitmentDetails,
+        min_participants: updatedTrip.minParticipants,
+        max_participants: updatedTrip.maxParticipants,
+      } as any);
+      const mapped = mapApiTrip(saved);
+      const originalTrip = trips.find(t => t.id === updatedTrip.id);
+      setTrips(trips.map(t => t.id === updatedTrip.id ? mapped : t));
+      setShowRecruitmentDialog(false);
+      setRecruitmentTrip(null);
+      setIsEditingRecruitment(false);
 
-    // Discord連携が新しく有効になった場合のみトースト表示（編集時も考慮）
-    if (discordLinked && !originalTrip?.discordLinked) {
-      toast.success('サロンへの募集投稿が完了しました', {
-        description: 'Discordに合流募集が投稿されました',
-      });
+      if (discordLinked && !originalTrip?.discordLinked) {
+        toast.success('サロンへの募集投稿が完了しました', {
+          description: 'Discordに合流募集が投稿されました',
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('募集の保存に失敗しました');
     }
   };
 
-  const handleJoinRecruitment = (trip: Trip) => {
+  const handleJoinRecruitment = async (trip: Trip) => {
     if (!authUser) {
       toast.error('参加するにはログインが必要です');
       return;
     }
-
-    setTrips(trips.map(t => {
-      if (t.id === trip.id) {
-        const participants = t.participants || [];
-        return {
-          ...t,
-          participants: [...participants, authUser.discordId],
-        };
-      }
-      return t;
-    }));
-
-    toast.success('参加しました！');
+    try {
+      const res = await TripsAPI.join(trip.id, authUser.discordId);
+      const mapped = mapApiTrip(res);
+      setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+      toast.success('参加しました！');
+    } catch (e) {
+      console.error(e);
+      toast.error('参加に失敗しました');
+    }
   };
 
-  const handleLeaveRecruitment = (trip: Trip) => {
+  const handleLeaveRecruitment = async (trip: Trip) => {
     if (!authUser) return;
-
-    setTrips(trips.map(t => {
-      if (t.id === trip.id) {
-        const participants = t.participants || [];
-        return {
-          ...t,
-          participants: participants.filter(id => id !== authUser.discordId),
-        };
-      }
-      return t;
-    }));
-
-    toast.success('参加をキャンセルしました');
+    try {
+      const res = await TripsAPI.leave(trip.id, authUser.discordId);
+      const mapped = mapApiTrip(res);
+      setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+      toast.success('参加をキャンセルしました');
+    } catch (e) {
+      console.error(e);
+      toast.error('取り消しに失敗しました');
+    }
   };
 
-  const handleAddParticipant = (trip: Trip, participantDiscordId: string) => {
-    setTrips(trips.map(t => {
-      if (t.id === trip.id) {
-        const participants = t.participants || [];
-        // 既に参加している場合は追加しない
-        if (participants.includes(participantDiscordId)) {
-          toast.info('既に参加しています');
-          return t;
-        }
-        return {
-          ...t,
-          participants: [...participants, participantDiscordId],
-        };
-      }
-      return t;
-    }));
-
-    const userData = getUserByDiscordId(participantDiscordId);
-    toast.success(`${userData?.displayName || '参加者'}さんを追加しました`);
+  const handleAddParticipant = async (trip: Trip, participantDiscordId: string) => {
+    try {
+      const res = await TripsAPI.join(trip.id, participantDiscordId);
+      const mapped = mapApiTrip(res);
+      setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+      const userData = getUserByDiscordId(participantDiscordId);
+      toast.success(`${userData?.displayName || '参加者'}さんを追加しました`);
+    } catch (e) {
+      console.error(e);
+      toast.error('参加者の追加に失敗しました');
+    }
   };
 
-  const handleRemoveParticipant = (trip: Trip, participantId: string) => {
-    setTrips(trips.map(t => {
-      if (t.id === trip.id) {
-        const participants = t.participants || [];
-        return {
-          ...t,
-          participants: participants.filter(id => id !== participantId),
-        };
-      }
-      return t;
-    }));
-
-    toast.success('参加者を削除しました');
+  const handleRemoveParticipant = async (trip: Trip, participantId: string) => {
+    try {
+      const res = await TripsAPI.leave(trip.id, participantId);
+      const mapped = mapApiTrip(res);
+      setTrips(trips.map(t => t.id === trip.id ? mapped : t));
+      toast.success('参加者を削除しました');
+    } catch (e) {
+      console.error(e);
+      toast.error('参加者の削除に失敗しました');
+    }
   };
 
-  const handleVoteDate = (trip: Trip, date: Date) => {
+  const handleVoteDate = async (trip: Trip, date: Date) => {
     if (!authUser) {
       toast.error('投票するにはログインが必要です');
       return;
     }
 
-    const dateString = date.toISOString();
+    const dateString = date.toISOString().slice(0, 10);
+    const mapForTrip = proposalIdByDate[trip.id] || {};
+    const proposalId = mapForTrip[dateString];
+    if (!proposalId) {
+      toast.error('この候補日は現在投票を受け付けていません');
+      return;
+    }
 
-    setTrips(trips.map(t => {
-      if (t.id === trip.id) {
-        const dateVotes = t.dateVotes || {};
-        const voters = dateVotes[dateString] || [];
-        
-        // 既に投票している場合は取り消し、していない場合は投票
-        const hasVoted = voters.includes(authUser.discordId);
-        const newVoters = hasVoted
-          ? voters.filter(id => id !== authUser.discordId)
-          : [...voters, authUser.discordId];
-
-        return {
-          ...t,
-          dateVotes: {
-            ...dateVotes,
-            [dateString]: newVoters,
-          },
-        };
+    // 既に投票済みか判定
+    const voted = (trip.dateVotes?.[dateString] || []).includes(authUser.discordId);
+    try {
+      if (voted) {
+        await DateProposalsAPI.unvote(proposalId, authUser.discordId);
+      } else {
+        await DateProposalsAPI.vote(proposalId, authUser.discordId);
       }
-      return t;
-    }));
-
-    toast.success('投票しました');
+      // 最新票を取得して反映
+      const votes = await DateProposalsAPI.votes(proposalId);
+      const newVotesMap = { ...(trip.dateVotes || {}) };
+      newVotesMap[dateString] = votes.map(v => v.user_discord_id);
+      setTrips(trips.map(t => t.id === trip.id ? { ...t, dateVotes: newVotesMap } : t));
+      toast.success('投票しました');
+    } catch (e) {
+      console.error(e);
+      toast.error('投票に失敗しました');
+    }
   };
 
   const handleDateClick = (date: Date) => {

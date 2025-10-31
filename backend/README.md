@@ -53,6 +53,34 @@ python manage.py runserver 0.0.0.0:8000
 - `POST /api/date_proposals/{id}/vote` 投票（body: `{ "user_discord_id": "..." }`）
 - `POST /api/date_proposals/{id}/unvote` 取消（body: `{ "user_discord_id": "..." }`）
 
+## エンドポイント（追加）
+
+### Geo（地域・国・都市）
+- `GET /api/regions/` 地域一覧（検索: `search=`、並び替え: `ordering=`）
+- `GET /api/countries/?region={region_id}&region_code=ASIA` 国一覧（地域でフィルタ可）
+- `GET /api/cities/?country={country_id}&country_code=JP&region_code=ASIA` 都市一覧（国/地域でフィルタ可）
+
+## データ投入（フロントTSデモデータから）
+
+以下のフロントエンドのTSファイルを解析して、DBに地域・国・都市を投入します。
+- `src/components/countries-data.ts`（`COUNTRIES_BY_REGION` を想定）
+- `src/components/japan-cities-data.ts`（`JAPAN_CITIES` を想定）
+
+コマンド:
+```bash
+cd backend
+python manage.py migrate
+python manage.py load_geo_seed --clean
+```
+- `--clean`: 既存の地域/国/都市データを削除してから再投入します。
+- 取り込みルール（ざっくり）:
+  - 地域: 内部でコードを定義（例: 日本=JAPAN, アジア=ASIA など）
+  - 国: `COUNTRIES_BY_REGION` の各地域に紐づく `name` を登録
+  - 都市: `JAPAN_CITIES` の `cities` 配列を日本の都市として登録
+
+注意:
+- TSファイルの構造が大きく変わっている場合、正規表現による簡易パーサが取りこぼす可能性があります。その場合は構造に合わせて `load_geo_seed.py` の正規表現を調整してください。
+
 ## モデル概要
 - `Trip`: 旅行/オフ会、募集、参加者、非表示など
 - `Notification`: ユーザー別の通知履歴（既読/未読）
