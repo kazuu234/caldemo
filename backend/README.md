@@ -81,6 +81,37 @@ python manage.py load_geo_seed --clean
 注意:
 - TSファイルの構造が大きく変わっている場合、正規表現による簡易パーサが取りこぼす可能性があります。その場合は構造に合わせて `load_geo_seed.py` の正規表現を調整してください。
 
+## Trip データ投入（追加）
+- 方式A: JSONから投入
+  - パス: `backend/seed/trips.json`
+  - 形式例:
+    ```json
+    [
+      {
+        "type": "trip",
+        "user_discord_id": "123456789012345678",
+        "user_name": "田中太郎",
+        "user_avatar": "https://...",
+        "country": "日本",
+        "city": "東京",
+        "start_date": "2025-11-05",
+        "end_date": "2025-11-10",
+        "description": "紅葉シーズンの京都観光",
+        "is_recruitment": false,
+        "participants": []
+      }
+    ]
+    ```
+- 方式B: フロント `src/App.tsx` の `initialTrips` を解析して投入（デモ向け）
+
+コマンド:
+```bash
+cd backend
+python manage.py load_trips_seed --clean             # JSONがあればJSON、無ければApp.tsxから
+python manage.py load_trips_seed --source json       # JSONを強制
+python manage.py load_trips_seed --source app        # App.tsxを強制
+```
+
 ## モデル概要
 - `Trip`: 旅行/オフ会、募集、参加者、非表示など
 - `Notification`: ユーザー別の通知履歴（既読/未読）
