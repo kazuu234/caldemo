@@ -8,7 +8,7 @@ import { Checkbox } from './ui/checkbox';
 import { Calendar } from './ui/calendar';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
 import { ScrollArea } from './ui/scroll-area';
-import { COUNTRIES_CITIES, REGIONS, COUNTRIES_BY_REGION } from './countries-data';
+import { useGeoData } from '../hooks/useGeoData';
 import { type AuthUser } from '../utils/auth';
 
 interface AddTripPageProps {
@@ -33,7 +33,8 @@ export function AddTripPage({ onAdd, onCancel, authUser }: AddTripPageProps) {
   const [showEndCalendar, setShowEndCalendar] = useState(false);
   const [showCountrySheet, setShowCountrySheet] = useState(false);
   const [showCitySheet, setShowCitySheet] = useState(false);
-  
+
+  const { regions: REGIONS, countriesByRegion: COUNTRIES_BY_REGION, countriesCities: COUNTRIES_CITIES } = useGeoData();
   const cities = country ? COUNTRIES_CITIES[country] || [] : [];
 
   // 認証ユーザーが変わったら名前を更新
@@ -360,7 +361,7 @@ export function AddTripPage({ onAdd, onCancel, authUser }: AddTripPageProps) {
           <ScrollArea className="h-full mt-4">
             <div className="space-y-4 pb-8">
               {REGIONS.map((region) => {
-                const countriesInRegion = COUNTRIES_BY_REGION[region];
+                const countriesInRegion = COUNTRIES_BY_REGION[region] || [];
                 return (
                   <div key={region}>
                     <div className="text-xs text-gray-500 mb-2 px-2">
@@ -374,7 +375,7 @@ export function AddTripPage({ onAdd, onCancel, authUser }: AddTripPageProps) {
                           className="w-full justify-start"
                           onClick={() => handleCountrySelect(countryOption.name)}
                         >
-                          {countryOption.emoji} {countryOption.name}
+                          {countryOption.name}
                         </Button>
                       ))}
                     </div>
