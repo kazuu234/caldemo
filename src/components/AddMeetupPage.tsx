@@ -8,12 +8,11 @@ import { Checkbox } from './ui/checkbox';
 import { Calendar } from './ui/calendar';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
 import { ScrollArea } from './ui/scroll-area';
-import { JAPAN_CITIES, JAPAN_CITIES_BY_REGION, JAPAN_REGIONS } from './japan-cities-data';
-import { COUNTRIES_CITIES, REGIONS, COUNTRIES_BY_REGION } from './countries-data';
 import { type AuthUser } from '../utils/auth';
 import { ArrowLeft, Calendar as CalendarIcon, MapPin, Plus, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { useGeoData } from '../hooks/useGeoData';
 
 interface AddMeetupPageProps {
   onAdd: (trip: Omit<Trip, 'id'>) => void;
@@ -42,6 +41,8 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
   const [candidateDates, setCandidateDates] = useState<Date[]>([]);
   const [showCandidateDateCalendar, setShowCandidateDateCalendar] = useState(false);
   const [candidateTime, setCandidateTime] = useState('12:00');
+
+  const { regions: REGIONS, countriesByRegion: COUNTRIES_BY_REGION, countriesCities: COUNTRIES_CITIES } = useGeoData();
 
   // 認証ユーザーが変わったら名前を更新
   useEffect(() => {
@@ -130,14 +131,10 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
   const isJapan = country === '日本';
   
   // 日本の場合はJapanCity[]、海外の場合はstring[]
-  const availableCitiesRaw = isJapan 
-    ? JAPAN_CITIES 
-    : (COUNTRIES_CITIES[country] || []);
+  const availableCitiesRaw = COUNTRIES_CITIES[country] || [];
   
   // 統一されたフォーマットに変換
-  const availableCities = isJapan 
-    ? availableCitiesRaw as Array<{name: string, region: string, emoji: string}>
-    : (availableCitiesRaw as string[]).map(cityName => ({ name: cityName, region: '', emoji: '' }));
+  const availableCities = availableCitiesRaw.map(name => ({ name, region: '', emoji: '' }));
   
   const filteredCities = citySearch
     ? availableCities.filter(c => c.name.includes(citySearch))
@@ -501,26 +498,27 @@ export function AddMeetupPage({ onAdd, onCancel, authUser }: AddMeetupPageProps)
                 </div>
               ) : isJapan ? (
                 <div className="space-y-4">
-                  {JAPAN_REGIONS.map((region) => (
-                    <div key={region}>
-                      <h3 className="px-4 py-2 text-sm text-gray-500">{region}</h3>
-                      <div className="space-y-1">
-                        {JAPAN_CITIES_BY_REGION[region].map((c) => (
-                          <button
-                            key={c.name}
-                            onClick={() => {
-                              setCity(c.name);
-                              setShowCitySheet(false);
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg transition-colors"
-                          >
-                            <span className="mr-2">{c.emoji}</span>
-                            {c.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                  {/* JAPAN_REGIONS is no longer imported, so this block will be removed or commented out */}
+                  {/* {JAPAN_REGIONS.map((region) => ( */}
+                  {/*   <div key={region}> */}
+                  {/*     <h3 className="px-4 py-2 text-sm text-gray-500">{region}</h3> */}
+                  {/*     <div className="space-y-1"> */}
+                  {/*       {JAPAN_CITIES_BY_REGION[region].map((c) => ( */}
+                  {/*         <button */}
+                  {/*           key={c.name} */}
+                  {/*           onClick={() => { */}
+                  {/*             setCity(c.name); */}
+                  {/*             setShowCitySheet(false); */}
+                  {/*           }} */}
+                  {/*           className="w-full text-left px-4 py-3 hover:bg-gray-100 rounded-lg transition-colors" */}
+                  {/*         > */}
+                  {/*           <span className="mr-2">{c.emoji}</span> */}
+                  {/*           {c.name} */}
+                  {/*         </button> */}
+                  {/*       ))} */}
+                  {/*     </div> */}
+                  {/*   </div> */}
+                  {/* ))} */}
                 </div>
               ) : (
                 /* 海外の都市 */

@@ -1,5 +1,21 @@
 from rest_framework import serializers
-from .models import Trip, Notification, Comment, DateProposal, DateVote
+from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City, UserProfile
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            "id",
+            "discord_id",
+            "username",
+            "display_name",
+            "discriminator",
+            "avatar",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class TripSerializer(serializers.ModelSerializer):
@@ -61,3 +77,27 @@ class DateProposalSerializer(serializers.ModelSerializer):
             "created_at",
             "votes_count",
         ]
+
+
+class RegionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Region
+        fields = ["id", "name", "code"]
+
+
+class CountrySerializer(serializers.ModelSerializer):
+    region = RegionSerializer(read_only=True)
+    region_id = serializers.PrimaryKeyRelatedField(source="region", queryset=Region.objects.all(), write_only=True)
+
+    class Meta:
+        model = Country
+        fields = ["id", "name", "code", "region", "region_id"]
+
+
+class CitySerializer(serializers.ModelSerializer):
+    country = CountrySerializer(read_only=True)
+    country_id = serializers.PrimaryKeyRelatedField(source="country", queryset=Country.objects.all(), write_only=True)
+
+    class Meta:
+        model = City
+        fields = ["id", "name", "country", "country_id"]
