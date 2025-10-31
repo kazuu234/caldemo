@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { MapPin, Calendar, Users } from 'lucide-react';
-import { getUserByDiscordId } from '../utils/auth';
+import { getUserByDiscordId } from '../utils/users';
 
 interface RecruitmentsViewProps {
   trips: Trip[];

@@ -9,7 +9,7 @@ import { MapPin, Calendar, Users, Eye, EyeOff, Edit, Trash2, UserPlus, UserMinus
 import { useState } from 'react';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { getUserByDiscordId } from '../utils/auth';
+import { getUserByDiscordId } from '../utils/users';
 import {
   AlertDialog,
   AlertDialogAction,

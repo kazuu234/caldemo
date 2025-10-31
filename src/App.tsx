@@ -26,7 +26,8 @@ import {
   clearUnreadCount,
   checkTripNotifications
 } from './utils/notifications';
-import { isAuthenticated, getAuthUser, verifyAuthToken, setAuthUser, clearAuthUser, getUserByDiscordId, type AuthUser } from './utils/auth';
+import { isAuthenticated, getAuthUser, verifyAuthToken, setAuthUser, clearAuthUser, type AuthUser } from './utils/auth';
+import { getUserByDiscordId, initUsers } from './utils/users';
 import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { 
   Popover,
@@ -314,6 +315,9 @@ export default function App() {
   // 認証状態の変化を追跡（デバッグ用）
   useEffect(() => {
     console.log('🟢 認証状態が変更されました:', authUser ? authUser.displayName : '未認証');
+    if (authUser) {
+      initUsers().catch(() => {});
+    }
   }, [authUser]);
 
   // 認証ユーザーが変わったら、自分の予定（isOwn: true）のデモデータを更新

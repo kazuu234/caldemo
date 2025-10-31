@@ -12,8 +12,10 @@ import {
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { COUNTRIES_CITIES, REGIONS, COUNTRIES_BY_REGION, Region } from './countries-data';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useGeoData } from '../hooks/useGeoData';
+
+export type Region = string;
 
 export interface CountryFilter {
   type: 'region' | 'country' | 'city';
@@ -33,6 +35,7 @@ export function CountryFilter({
 }: CountryFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [expandedCountries, setExpandedCountries] = useState<string[]>([]);
+  const { regions: REGIONS, countriesByRegion: COUNTRIES_BY_REGION, countriesCities: COUNTRIES_CITIES } = useGeoData();
 
   const handleRegionToggle = (region: Region) => {
     const existingFilter = selectedFilters.find(
@@ -40,11 +43,9 @@ export function CountryFilter({
     );
     
     if (existingFilter) {
-      // 地域を削除
       onSelectionChange(selectedFilters.filter(f => !(f.type === 'region' && f.region === region)));
     } else {
-      // 地域を追加（その地域の国・都市フィルターは削除）
-      const countriesInRegion = COUNTRIES_BY_REGION[region];
+      const countriesInRegion = COUNTRIES_BY_REGION[region] || [];
       const filtered = selectedFilters.filter(f => {
         if (f.type === 'region') return true;
         if (f.type === 'country' || f.type === 'city') {
@@ -62,10 +63,8 @@ export function CountryFilter({
     );
     
     if (existingFilter) {
-      // 国を削除
       onSelectionChange(selectedFilters.filter(f => !(f.type === 'country' && f.country === country)));
     } else {
-      // 国を追加（その国の都市フィルターは削除）
       const filtered = selectedFilters.filter(f => 
         !(f.type === 'city' && f.country === country)
       );
@@ -82,12 +81,10 @@ export function CountryFilter({
     );
     
     if (existingCityFilter) {
-      // 都市を削除
       onSelectionChange(selectedFilters.filter(f => 
         !(f.type === 'city' && f.country === country && f.city === city)
       ));
     } else if (countryFilter) {
-      // 国全体が選択されている場合、その都市以外を選択
       const allCities = COUNTRIES_CITIES[country] || [];
       const otherCities = allCities.filter(c => c !== city);
       const filtered = selectedFilters.filter(f => 
@@ -100,7 +97,6 @@ export function CountryFilter({
       }));
       onSelectionChange([...filtered, ...newFilters]);
     } else {
-      // 都市を追加
       onSelectionChange([...selectedFilters, { type: 'city', country, city }]);
     }
   };
@@ -133,9 +129,7 @@ export function CountryFilter({
   };
 
   const isCitySelected = (country: string, city: string) => {
-    // 国全体が選択されている場合
     if (isCountryFullySelected(country)) return true;
-    // 都市が選択されている場合
     return selectedFilters.some(f => 
       f.type === 'city' && f.country === country && f.city === city
     );
@@ -156,8 +150,8 @@ export function CountryFilter({
   };
 
   const getFilterLabel = (filter: CountryFilter) => {
-    if (filter.type === 'region') return filter.region;
-    if (filter.type === 'country') return filter.country;
+    if (filter.type === 'region') return filter.region as string;
+    if (filter.type === 'country') return filter.country as string;
     if (filter.type === 'city') return `${filter.country} - ${filter.city}`;
     return '';
   };
@@ -197,20 +191,17 @@ export function CountryFilter({
                 </Button>
               </div>
             )}
-            
             <Tabs defaultValue="region" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="region">地域</TabsTrigger>
                 <TabsTrigger value="country">国・都市</TabsTrigger>
               </TabsList>
-              
               <TabsContent value="region" className="mt-4">
                 <ScrollArea className="h-[calc(85vh-280px)]">
                   <div className="space-y-2 pr-4">
                     {REGIONS.map((region) => {
                       const isSelected = isRegionSelected(region);
-                      const countriesInRegion = COUNTRIES_BY_REGION[region];
-                      
+                      const countriesInRegion = COUNTRIES_BY_REGION[region] || [];
                       return (
                         <div key={region} className="border-b last:border-b-0 pb-3">
                           <div className="flex items-center space-x-2">
@@ -235,13 +226,11 @@ export function CountryFilter({
                   </div>
                 </ScrollArea>
               </TabsContent>
-              
               <TabsContent value="country" className="mt-4">
                 <ScrollArea className="h-[calc(85vh-280px)]">
                   <div className="space-y-1 pr-4">
                     {REGIONS.map((region) => {
-                      const countriesInRegion = COUNTRIES_BY_REGION[region];
-                      
+                      const countriesInRegion = COUNTRIES_BY_REGION[region] || [];
                       return (
                         <div key={region} className="mb-4">
                           <div className="text-xs text-gray-500 mb-2 px-2">
@@ -253,7 +242,6 @@ export function CountryFilter({
                             const isExpanded = expandedCountries.includes(country);
                             const isSelected = isCountrySelected(country);
                             const isFullySelected = isCountryFullySelected(country);
-
                             return (
                               <div key={country} className="border-b last:border-b-0 pb-2">
                                 <div className="flex items-center space-x-2">
@@ -279,14 +267,12 @@ export function CountryFilter({
                                     htmlFor={`country-${country}`}
                                     className="leading-none cursor-pointer flex-1"
                                   >
-                                    <span className="mr-2">{countryObj.emoji}</span>
                                     {country}
                                     {isFullySelected && (
                                       <span className="text-xs text-gray-500 ml-2">(全ての都市)</span>
                                     )}
                                   </label>
                                 </div>
-                                
                                 {isExpanded && (
                                   <div className="ml-8 mt-2 space-y-2">
                                     {cities.map((city) => (
@@ -320,7 +306,6 @@ export function CountryFilter({
         </SheetContent>
       </Sheet>
 
-      {/* 選択中のフィルターを表示 */}
       {selectedFilters.map((filter, index) => (
         <Badge key={index} variant="secondary" className="gap-1 h-7 text-xs">
           {getFilterLabel(filter)}
