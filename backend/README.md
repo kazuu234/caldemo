@@ -53,6 +53,65 @@ python manage.py runserver 0.0.0.0:8000
 - `POST /api/date_proposals/{id}/vote` 投票（body: `{ "user_discord_id": "..." }`）
 - `POST /api/date_proposals/{id}/unvote` 取消（body: `{ "user_discord_id": "..." }`）
 
+## エンドポイント（追加）
+
+### Geo（地域・国・都市）
+- `GET /api/regions/` 地域一覧（検索: `search=`、並び替え: `ordering=`）
+- `GET /api/countries/?region={region_id}&region_code=ASIA` 国一覧（地域でフィルタ可）
+- `GET /api/cities/?country={country_id}&country_code=JP&region_code=ASIA` 都市一覧（国/地域でフィルタ可）
+
+## データ投入（フロントTSデモデータから）
+
+以下のフロントエンドのTSファイルを解析して、DBに地域・国・都市を投入します。
+- `src/components/countries-data.ts`（`COUNTRIES_BY_REGION` を想定）
+- `src/components/japan-cities-data.ts`（`JAPAN_CITIES` を想定）
+
+コマンド:
+```bash
+cd backend
+python manage.py migrate
+python manage.py load_geo_seed --clean
+```
+- `--clean`: 既存の地域/国/都市データを削除してから再投入します。
+- 取り込みルール（ざっくり）:
+  - 地域: 内部でコードを定義（例: 日本=JAPAN, アジア=ASIA など）
+  - 国: `COUNTRIES_BY_REGION` の各地域に紐づく `name` を登録
+  - 都市: `JAPAN_CITIES` の `cities` 配列を日本の都市として登録
+
+注意:
+- TSファイルの構造が大きく変わっている場合、正規表現による簡易パーサが取りこぼす可能性があります。その場合は構造に合わせて `load_geo_seed.py` の正規表現を調整してください。
+
+## Trip データ投入（追加）
+- 方式A: JSONから投入
+  - パス: `backend/seed/trips.json`
+  - 形式例:
+    ```json
+    [
+      {
+        "type": "trip",
+        "user_discord_id": "123456789012345678",
+        "user_name": "田中太郎",
+        "user_avatar": "https://...",
+        "country": "日本",
+        "city": "東京",
+        "start_date": "2025-11-05",
+        "end_date": "2025-11-10",
+        "description": "紅葉シーズンの京都観光",
+        "is_recruitment": false,
+        "participants": []
+      }
+    ]
+    ```
+- 方式B: フロント `src/App.tsx` の `initialTrips` を解析して投入（デモ向け）
+
+コマンド:
+```bash
+cd backend
+python manage.py load_trips_seed --clean             # JSONがあればJSON、無ければApp.tsxから
+python manage.py load_trips_seed --source json       # JSONを強制
+python manage.py load_trips_seed --source app        # App.tsxを強制
+```
+
 ## モデル概要
 - `Trip`: 旅行/オフ会、募集、参加者、非表示など
 - `Notification`: ユーザー別の通知履歴（既読/未読）
@@ -64,3 +123,17 @@ python manage.py runserver 0.0.0.0:8000
 - DB: SQLite（`server/settings.py`）
 - CORS: 開発中は `CORS_ALLOW_ALL_ORIGINS = True`
 - 認可: 開発用に `AllowAny`
+
+## ユーザー（追加）
+- モデル: `UserProfile(discord_id, username, display_name, discriminator, avatar, is_active)`
+- API（読み取り専用）:
+  - `GET /api/users/`（検索: `search=` ユーザー名/表示名/discord_id、並び替え: `ordering=`）
+  - `GET /api/users/{id}/`
+- データ投入（フロントTSのモックから）:
+```bash
+cd backend
+python manage.py migrate
+python manage.py load_users_seed --clean
+```
+
+他のエンドポイントや Geo の投入は前節を参照。

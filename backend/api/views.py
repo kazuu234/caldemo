@@ -5,14 +5,26 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django.utils.dateparse import parse_date
-from .models import Trip, Notification, Comment, DateProposal, DateVote
+from .models import Trip, Notification, Comment, DateProposal, DateVote, Region, Country, City, UserProfile
 from .serializers import (
     TripSerializer,
     NotificationSerializer,
     CommentSerializer,
     DateProposalSerializer,
     DateVoteSerializer,
+    RegionSerializer,
+    CountrySerializer,
+    CitySerializer,
+    UserProfileSerializer,
 )
+
+
+class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["username", "display_name", "discord_id"]
+    ordering = ["display_name", "username"]
 
 
 class TripViewSet(viewsets.ModelViewSet):
@@ -218,3 +230,53 @@ class DateProposalViewSet(viewsets.ModelViewSet):
             return Response({"detail": "user_discord_id は必須です"}, status=400)
         DateVote.objects.filter(proposal=proposal, user_discord_id=discord_id).delete()
         return Response({"status": "ok"})
+
+
+class RegionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Region.objects.all()
+    serializer_class = RegionSerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["name", "code"]
+    ordering = ["name"]
+
+
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Country.objects.select_related("region").all()
+    serializer_class = CountrySerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["name", "code", "region__name", "region__code"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        region = self.request.query_params.get("region")
+        region_code = self.request.query_params.get("region_code")
+        if region:
+            qs = qs.filter(region_id=region)
+        if region_code:
+            qs = qs.filter(region__code=region_code)
+        return qs
+
+
+class CityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = City.objects.select_related("country", "country__region").all()
+    serializer_class = CitySerializer
+    filter_backends = [SearchFilter, OrderingFilter]
+    search_fields = ["name", "country__name", "country__code", "country__region__name", "country__region__code"]
+    ordering = ["name"]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        country = self.request.query_params.get("country")
+        country_code = self.request.query_params.get("country_code")
+        region = self.request.query_params.get("region")
+        region_code = self.request.query_params.get("region_code")
+        if country:
+            qs = qs.filter(country_id=country)
+        if country_code:
+            qs = qs.filter(country__code=country_code)
+        if region:
+            qs = qs.filter(country__region_id=region)
+        if region_code:
+            qs = qs.filter(country__region__code=region_code)
+        return qs

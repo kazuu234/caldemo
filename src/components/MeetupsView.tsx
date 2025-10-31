@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { MapPin, Calendar, Users, Eye, EyeOff, Edit, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { MapPin, Calendar, Users, Eye, EyeOff, Edit, Trash2, UserPlus, UserMinus, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
@@ -27,7 +27,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from './ui/sheet';
-import { getUserByDiscordId } from '../utils/auth';
+import { getUserByDiscordId as getUserByDiscordIdDup } from '../utils/auth';
+import { CommentsPanel } from './CommentsPanel';
 
 interface MeetupsViewProps {
   trips: Trip[];
@@ -62,6 +63,7 @@ export function MeetupsView({
   const [hideConfirmTrip, setHideConfirmTrip] = useState<Trip | null>(null);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [showParticipantsSheet, setShowParticipantsSheet] = useState(false);
+  const [showCommentsSheet, setShowCommentsSheet] = useState(false);
   const [participantSearch, setParticipantSearch] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
@@ -334,6 +336,14 @@ export function MeetupsView({
                         >
                           <UserPlus className="h-4 w-4" />
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setSelectedTrip(trip); setShowCommentsSheet(true); }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          コメント
+                        </Button>
                       </>
                     ) : (
                       <>
@@ -362,6 +372,14 @@ export function MeetupsView({
                             </Button>
                           )
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => { setSelectedTrip(trip); setShowCommentsSheet(true); }}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          コメント
+                        </Button>
                       </>
                     )}
                   </div>
@@ -399,6 +417,24 @@ export function MeetupsView({
           </Card>
         );
       })}
+
+      {/* コメントシート */}
+      <Sheet open={showCommentsSheet} onOpenChange={setShowCommentsSheet}>
+        <SheetContent side="bottom" className="h-[70vh]">
+          <SheetHeader>
+            <SheetTitle>コメント</SheetTitle>
+            <SheetDescription>このオフ会に関するコメント</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4">
+            {selectedTrip && authUser && (
+              <CommentsPanel tripId={selectedTrip.id} userDiscordId={authUser.discordId} userName={authUser.displayName} />
+            )}
+            {selectedTrip && !authUser && (
+              <div className="text-sm text-gray-500">コメントにはログインが必要です</div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* 削除確認ダイアログ */}
       <AlertDialog open={!!deleteConfirmTrip} onOpenChange={(open) => !open && setDeleteConfirmTrip(null)}>

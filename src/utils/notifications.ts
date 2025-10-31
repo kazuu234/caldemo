@@ -1,31 +1,51 @@
 import { Trip } from '../App';
+import { NotificationsAPI } from './api';
+import { getAuthUser } from './auth';
 
-// 未読予定数を管理（ローカルストレージ）
+// 未読予定数を管理（API優先、フォールバックにローカルストレージ）
 const UNREAD_COUNT_KEY = 'unreadTripCount';
 // 通知チェック済み予定を管理
 const NOTIFIED_TRIPS_KEY = 'notifiedTrips';
 
-// 未読数を取得
-export function getUnreadCount(): number {
+// 未読数を取得（API→fallback）
+export async function fetchUnreadCount(): Promise<number> {
+  const user = getAuthUser();
+  if (!user) return getUnreadCountLocal();
+  try {
+    const { unread } = await NotificationsAPI.count(user.discordId);
+    updateAppBadge(unread);
+    setUnreadCountLocal(unread);
+    return unread;
+  } catch {
+    return getUnreadCountLocal();
+  }
+}
+
+export function getUnreadCountLocal(): number {
   const count = localStorage.getItem(UNREAD_COUNT_KEY);
   return count ? parseInt(count, 10) : 0;
 }
 
-// 未読数を設定
-export function setUnreadCount(count: number) {
+function setUnreadCountLocal(count: number) {
   localStorage.setItem(UNREAD_COUNT_KEY, count.toString());
   updateAppBadge(count);
 }
 
-// 未読数を増やす
-export function incrementUnreadCount() {
-  const currentCount = getUnreadCount();
-  setUnreadCount(currentCount + 1);
+export function incrementUnreadCountLocal() {
+  const currentCount = getUnreadCountLocal();
+  setUnreadCountLocal(currentCount + 1);
 }
 
-// 未読数をクリア
-export function clearUnreadCount() {
-  setUnreadCount(0);
+export async function clearUnreadCount() {
+  const user = getAuthUser();
+  if (user) {
+    try {
+      await NotificationsAPI.markAllRead(user.discordId);
+    } catch {
+      // ignore
+    }
+  }
+  setUnreadCountLocal(0);
 }
 
 // アプリバッジを更新（Android Chrome、Edge等で対応）
@@ -62,10 +82,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return false;
 }
 
-// 新しい予定の通知を表示
+// 新しい予定の通知を表示（ローカルUX）
 export function showTripNotification(trip: Trip) {
-  // 未読数を増やす
-  incrementUnreadCount();
+  incrementUnreadCountLocal();
 
   if (!('Notification' in window)) {
     return;
@@ -73,7 +92,7 @@ export function showTripNotification(trip: Trip) {
 
   if (Notification.permission === 'granted') {
     const title = '新しい旅行予定が追加されました';
-    const unreadCount = getUnreadCount();
+    const unreadCount = getUnreadCountLocal();
     const options: NotificationOptions = {
       body: `${trip.userName}さんが${trip.country} - ${trip.city}への旅行を予定しています`,
       icon: trip.userAvatar,
@@ -88,28 +107,29 @@ export function showTripNotification(trip: Trip) {
 
     const notification = new Notification(title, options);
 
-    // 通知をクリックしたときの処理
-    notification.onclick = () => {
+    notification.onclick = async () => {
       window.focus();
-      // クリックしたら未読を減らす
-      const current = getUnreadCount();
+      const current = getUnreadCountLocal();
       if (current > 0) {
-        setUnreadCount(current - 1);
+        setUnreadCountLocal(current - 1);
       }
+      // 既読反映
+      try {
+        const user = getAuthUser();
+        if (user) await NotificationsAPI.markAllRead(user.discordId);
+      } catch {}
       notification.close();
     };
 
-    // 5秒後に自動で閉じる
     setTimeout(() => {
       notification.close();
     }, 5000);
   }
 }
 
-// 合流募集の通知を表示
+// 合流募集の通知を表示（ローカルUX）
 export function showRecruitmentNotification(trip: Trip) {
-  // 未読数を増やす
-  incrementUnreadCount();
+  incrementUnreadCountLocal();
 
   if (!('Notification' in window)) {
     return;
@@ -117,7 +137,7 @@ export function showRecruitmentNotification(trip: Trip) {
 
   if (Notification.permission === 'granted') {
     const title = '合流募集が投稿されました';
-    const unreadCount = getUnreadCount();
+    const unreadCount = getUnreadCountLocal();
     const options: NotificationOptions = {
       body: `${trip.userName}さんが${trip.country} - ${trip.city}で仲間を募集しています`,
       icon: trip.userAvatar,
@@ -132,13 +152,16 @@ export function showRecruitmentNotification(trip: Trip) {
 
     const notification = new Notification(title, options);
 
-    notification.onclick = () => {
+    notification.onclick = async () => {
       window.focus();
-      // クリックしたら未読を減らす
-      const current = getUnreadCount();
+      const current = getUnreadCountLocal();
       if (current > 0) {
-        setUnreadCount(current - 1);
+        setUnreadCountLocal(current - 1);
       }
+      try {
+        const user = getAuthUser();
+        if (user) await NotificationsAPI.markAllRead(user.discordId);
+      } catch {}
       notification.close();
     };
 
@@ -204,7 +227,7 @@ export function showDayBeforeNotification(trip: Trip) {
     return;
   }
 
-  incrementUnreadCount();
+  incrementUnreadCountLocal();
 
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return;
@@ -222,12 +245,16 @@ export function showDayBeforeNotification(trip: Trip) {
 
   const notification = new Notification(title, options);
 
-  notification.onclick = () => {
+  notification.onclick = async () => {
     window.focus();
-    const current = getUnreadCount();
+    const current = getUnreadCountLocal();
     if (current > 0) {
-      setUnreadCount(current - 1);
+      setUnreadCountLocal(current - 1);
     }
+    try {
+      const user = getAuthUser();
+      if (user) await NotificationsAPI.markAllRead(user.discordId);
+    } catch {}
     notification.close();
   };
 
@@ -249,7 +276,7 @@ export function showSameDayNotification(trip: Trip) {
     return;
   }
 
-  incrementUnreadCount();
+  incrementUnreadCountLocal();
 
   if (!('Notification' in window) || Notification.permission !== 'granted') {
     return;
@@ -267,12 +294,16 @@ export function showSameDayNotification(trip: Trip) {
 
   const notification = new Notification(title, options);
 
-  notification.onclick = () => {
+  notification.onclick = async () => {
     window.focus();
-    const current = getUnreadCount();
+    const current = getUnreadCountLocal();
     if (current > 0) {
-      setUnreadCount(current - 1);
+      setUnreadCountLocal(current - 1);
     }
+    try {
+      const user = getAuthUser();
+      if (user) await NotificationsAPI.markAllRead(user.discordId);
+    } catch {}
     notification.close();
   };
 
@@ -293,28 +324,9 @@ async function sendDiscordDMTrigger(trip: Trip, timing: 'dayBefore' | 'sameDay')
   console.log(`🔔 Discord DM送信トリガー: ${timing}`, {
     tripId: trip.id,
     destination: trip.country + ' - ' + trip.city,
-    participants: trip.participants?.map(p => p.displayName).join(', '),
+    participants: trip.participants?.join(', '),
     timing,
   });
-
-  // 実際の実装では、Django REST APIを呼び出す
-  // 例:
-  // try {
-  //   await fetch('/api/discord/send-trip-notification/', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Authorization': `Bearer ${getAuthToken()}`,
-  //     },
-  //     body: JSON.stringify({
-  //       tripId: trip.id,
-  //       timing,
-  //       participants: trip.participants?.map(p => p.discordId),
-  //     }),
-  //   });
-  // } catch (error) {
-  //   console.error('Discord DM送信エラー:', error);
-  // }
 }
 
 // 予定の通知チェック（アプリ起動時やページ読み込み時に呼び出す）
