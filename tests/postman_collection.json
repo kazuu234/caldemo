@@ -1,0 +1,522 @@
+{
+  "info": {
+    "name": "Travel App API Tests",
+    "description": "フロントエンド仕様に基づくバックエンドAPIのテスト用Postmanコレクション",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Geo APIs",
+      "item": [
+        {
+          "name": "GET Regions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/regions/",
+              "host": ["{{base_url}}"],
+              "path": ["regions", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Countries",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/countries/?region_code=ASIA",
+              "host": ["{{base_url}}"],
+              "path": ["countries", ""],
+              "query": [
+                {"key": "region_code", "value": "ASIA"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cities/?country=日本",
+              "host": ["{{base_url}}"],
+              "path": ["cities", ""],
+              "query": [
+                {"key": "country", "value": "日本"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users APIs",
+      "item": [
+        {
+          "name": "GET Users List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/",
+              "host": ["{{base_url}}"],
+              "path": ["users", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Users Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/?search=tanaka",
+              "host": ["{{base_url}}"],
+              "path": ["users", ""],
+              "query": [
+                {"key": "search", "value": "tanaka"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET User by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trips APIs",
+      "item": [
+        {
+          "name": "GET Trips List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trips/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Trips with Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trips/?type=trip&is_recruitment=true&user_discord_id=123456789012345678",
+              "host": ["{{base_url}}"],
+              "path": ["trips", ""],
+              "query": [
+                {"key": "type", "value": "trip"},
+                {"key": "is_recruitment", "value": "true"},
+                {"key": "user_discord_id", "value": "123456789012345678"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Create Trip",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"trip\",\n  \"user_discord_id\": \"123456789012345678\",\n  \"user_name\": \"田中太郎\",\n  \"user_avatar\": \"https://api.dicebear.com/7.x/avataaars/svg?seed=Tanaka\",\n  \"country\": \"日本\",\n  \"city\": \"東京\",\n  \"start_date\": \"2025-11-05\",\n  \"end_date\": \"2025-11-10\",\n  \"description\": \"紅葉シーズンの京都観光\",\n  \"is_recruitment\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", ""]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Trip",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"更新された説明\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "DELETE Trip",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Join Trip",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discord_id\": \"234567890123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/join/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "join", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Leave Trip",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"discord_id\": \"234567890123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/leave/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "leave", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Toggle Recruitment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_recruitment\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/toggle_recruitment/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "toggle_recruitment", ""]
+            }
+          }
+        },
+        {
+          "name": "POST End Recruitment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/end_recruitment/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "end_recruitment", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Toggle Hidden",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_hidden\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/trips/{{trip_id}}/toggle_hidden/",
+              "host": ["{{base_url}}"],
+              "path": ["trips", "{{trip_id}}", "toggle_hidden", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications APIs",
+      "item": [
+        {
+          "name": "GET Notifications List",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/?user_discord_id=123456789012345678",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", ""],
+              "query": [
+                {"key": "user_discord_id", "value": "123456789012345678"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Unread Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/?user_discord_id=123456789012345678&unread_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", ""],
+              "query": [
+                {"key": "user_discord_id", "value": "123456789012345678"},
+                {"key": "unread_only", "value": "true"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET Notifications Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/count?user_discord_id=123456789012345678",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "count"],
+              "query": [
+                {"key": "user_discord_id", "value": "123456789012345678"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Mark Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notification_id}}/mark_read/",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "{{notification_id}}", "mark_read", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Mark All Read",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_discord_id\": \"123456789012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/notifications/mark_all_read/",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "mark_all_read", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments APIs",
+      "item": [
+        {
+          "name": "GET Comments by Trip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comments/?trip={{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["comments", ""],
+              "query": [
+                {"key": "trip", "value": "{{trip_id}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip\": \"{{trip_id}}\",\n  \"user_discord_id\": \"123456789012345678\",\n  \"user_name\": \"田中太郎\",\n  \"content\": \"いい旅ですね！\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comments/",
+              "host": ["{{base_url}}"],
+              "path": ["comments", ""]
+            }
+          }
+        },
+        {
+          "name": "PATCH Update Comment",
+          "request": {
+            "method": "PATCH",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"更新されたコメント\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/comments/{{comment_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["comments", "{{comment_id}}", ""]
+            }
+          }
+        },
+        {
+          "name": "DELETE Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/comments/{{comment_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["comments", "{{comment_id}}", ""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Date Proposals & Votes APIs",
+      "item": [
+        {
+          "name": "GET Date Proposals by Trip",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/date_proposals/?trip={{trip_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", ""],
+              "query": [
+                {"key": "trip", "value": "{{trip_id}}"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST Create Date Proposal",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip\": \"{{trip_id}}\",\n  \"date\": \"2025-11-15\",\n  \"created_by_discord_id\": \"123456789012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/date_proposals/",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", ""]
+            }
+          }
+        },
+        {
+          "name": "GET Votes for Proposal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/date_proposals/{{proposal_id}}/votes/",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", "{{proposal_id}}", "votes", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Vote",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_discord_id\": \"123456789012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/date_proposals/{{proposal_id}}/vote/",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", "{{proposal_id}}", "vote", ""]
+            }
+          }
+        },
+        {
+          "name": "POST Unvote",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user_discord_id\": \"123456789012345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/date_proposals/{{proposal_id}}/unvote/",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", "{{proposal_id}}", "unvote", ""]
+            }
+          }
+        },
+        {
+          "name": "DELETE Date Proposal",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/date_proposals/{{proposal_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["date_proposals", "{{proposal_id}}", ""]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "trip_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "comment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "proposal_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
+
